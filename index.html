@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nata Finance | Cross-border USDC Payments on Arc</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.13.4/ethers.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080a0f;
+      --panel: #101620;
+      --panel-2: #0d121a;
+      --line: #263241;
+      --text: #f3f7fb;
+      --muted: #91a1b3;
+      --soft: #c7d2df;
+      --green: #28d18c;
+      --cyan: #54c7ec;
+      --amber: #f2b84b;
+      --red: #ff6678;
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at 15% -10%, rgba(84, 199, 236, 0.16), transparent 34rem),
+        radial-gradient(circle at 85% 0%, rgba(40, 209, 140, 0.12), transparent 30rem),
+        var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    button, input, textarea { font: inherit; }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.55;
+    }
+
+    a { color: inherit; }
+
+    .shell {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 28px 0 46px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .mark {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--cyan), var(--green));
+      color: #061014;
+      font-weight: 900;
+      letter-spacing: 0;
+      box-shadow: 0 16px 35px rgba(84, 199, 236, 0.22);
+      flex: 0 0 auto;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.18rem;
+      letter-spacing: 0;
+      line-height: 1.1;
+    }
+
+    .brand p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .wallet-area {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .status-pill, .address-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(16, 22, 32, 0.76);
+      color: var(--soft);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--amber);
+      box-shadow: 0 0 0 4px rgba(242, 184, 75, 0.12);
+    }
+
+    .dot.ok {
+      background: var(--green);
+      box-shadow: 0 0 0 4px rgba(40, 209, 140, 0.12);
+    }
+
+    .primary, .secondary, .danger {
+      min-height: 42px;
+      padding: 0 15px;
+      border-radius: 8px;
+      font-weight: 750;
+      color: #061014;
+      transition: transform 0.18s ease, opacity 0.18s ease, border-color 0.18s ease;
+    }
+
+    .primary {
+      background: linear-gradient(135deg, var(--green), var(--cyan));
+    }
+
+    .secondary {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .danger {
+      background: rgba(255, 102, 120, 0.12);
+      color: #ffd1d7;
+      border: 1px solid rgba(255, 102, 120, 0.38);
+    }
+
+    .primary:hover, .secondary:hover, .danger:hover { transform: translateY(-1px); }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) 360px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: rgba(16, 22, 32, 0.88);
+      border: 1px solid rgba(199, 210, 223, 0.12);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+      padding: 8px;
+      border-bottom: 1px solid rgba(199, 210, 223, 0.1);
+      background: rgba(13, 18, 26, 0.65);
+      border-radius: 8px 8px 0 0;
+    }
+
+    .tab {
+      min-height: 42px;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 750;
+      transition: background 0.18s ease, color 0.18s ease;
+    }
+
+    .tab.active {
+      background: #1a2431;
+      color: var(--text);
+    }
+
+    .view {
+      display: none;
+      padding: 22px;
+      animation: fade 0.24s ease;
+    }
+
+    .view.active { display: block; }
+
+    @keyframes fade {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .section-head h2 {
+      margin: 0 0 6px;
+      font-size: clamp(1.45rem, 3vw, 2.2rem);
+      letter-spacing: 0;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      color: var(--soft);
+      font-weight: 700;
+      font-size: 0.88rem;
+    }
+
+    input, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #090d13;
+      color: var(--text);
+      min-height: 48px;
+      padding: 12px 13px;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    textarea {
+      min-height: 112px;
+      resize: vertical;
+      line-height: 1.5;
+    }
+
+    input:focus, textarea:focus {
+      border-color: rgba(84, 199, 236, 0.8);
+      box-shadow: 0 0 0 4px rgba(84, 199, 236, 0.1);
+    }
+
+    .help-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .counter.warn { color: var(--amber); }
+    .counter.bad { color: var(--red); }
+
+    .preview {
+      margin: 18px 0;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .metric {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel-2);
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-bottom: 7px;
+    }
+
+    .metric strong {
+      display: block;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-size: 1.1rem;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .subtabs {
+      display: inline-grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 4px;
+      padding: 4px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #090d13;
+    }
+
+    .subtab {
+      min-height: 36px;
+      min-width: 104px;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .subtab.active {
+      background: #1a2431;
+      color: var(--text);
+    }
+
+    .history-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .payment-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #0a0f16;
+    }
+
+    .payment-row h3 {
+      margin: 0 0 8px;
+      font-size: 1rem;
+      overflow-wrap: anywhere;
+    }
+
+    .payment-row dl {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.83rem;
+    }
+
+    .payment-row dt { display: none; }
+
+    .payment-row dd {
+      margin: 0;
+      padding: 4px 7px;
+      border-radius: 6px;
+      background: #121a25;
+    }
+
+    .amount-stack {
+      text-align: right;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      min-width: 150px;
+    }
+
+    .amount-stack strong {
+      color: var(--green);
+      white-space: nowrap;
+    }
+
+    .amount-stack.sent strong { color: var(--red); }
+
+    .amount-stack a {
+      color: var(--cyan);
+      font-size: 0.84rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .empty, .loading-state {
+      padding: 34px 16px;
+      border: 1px dashed var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      text-align: center;
+      background: rgba(9, 13, 19, 0.55);
+    }
+
+    .side {
+      display: grid;
+      gap: 14px;
+      position: sticky;
+      top: 18px;
+    }
+
+    .side .panel { padding: 18px; }
+
+    .balance {
+      display: grid;
+      gap: 8px;
+    }
+
+    .balance small {
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .balance strong {
+      font-size: 2.2rem;
+      line-height: 1;
+      overflow-wrap: anywhere;
+    }
+
+    .network-box {
+      display: none;
+      gap: 12px;
+      padding: 14px;
+      border-radius: 8px;
+      background: rgba(242, 184, 75, 0.1);
+      border: 1px solid rgba(242, 184, 75, 0.32);
+      color: #ffe0a3;
+      margin-bottom: 16px;
+    }
+
+    .network-box.show { display: grid; }
+
+    .stat-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .stat-grid .metric strong {
+      font-size: 1.45rem;
+    }
+
+    .toast-region {
+      position: fixed;
+      z-index: 50;
+      right: 18px;
+      bottom: 18px;
+      display: grid;
+      gap: 10px;
+      width: min(390px, calc(100vw - 36px));
+    }
+
+    .toast {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 13px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: #101620;
+      box-shadow: var(--shadow);
+      color: var(--soft);
+      animation: toast-in 0.2s ease;
+    }
+
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .toast.success { border-color: rgba(40, 209, 140, 0.45); }
+    .toast.error { border-color: rgba(255, 102, 120, 0.5); }
+    .toast.pending { border-color: rgba(84, 199, 236, 0.45); }
+
+    .toast-title {
+      display: block;
+      color: var(--text);
+      font-weight: 800;
+      margin-bottom: 3px;
+    }
+
+    .toast a {
+      color: var(--cyan);
+      font-weight: 750;
+      text-decoration: none;
+    }
+
+    .spinner {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-top-color: var(--cyan);
+      animation: spin 0.78s linear infinite;
+      margin-top: 2px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .icon {
+      width: 18px;
+      height: 18px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      font-weight: 900;
+    }
+
+    .icon.success { background: rgba(40, 209, 140, 0.14); color: var(--green); }
+    .icon.error { background: rgba(255, 102, 120, 0.14); color: var(--red); }
+
+    @media (max-width: 880px) {
+      .layout { grid-template-columns: 1fr; }
+      .side { position: static; grid-row: 1; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .wallet-area { justify-content: flex-start; width: 100%; }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100% - 22px, 1180px);
+        padding-top: 16px;
+      }
+
+      .view { padding: 16px; }
+      .form-grid, .preview, .stat-grid { grid-template-columns: 1fr; }
+      .section-head { flex-direction: column; }
+      .payment-row { grid-template-columns: 1fr; }
+      .amount-stack { text-align: left; }
+      .tabs { grid-template-columns: 1fr; }
+      .tab { min-height: 38px; }
+      .primary, .secondary, .danger { width: 100%; }
+      .status-pill, .address-pill { width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="mark" aria-hidden="true">NF</div>
+        <div>
+          <h1>Nata Finance</h1>
+          <p>Cross-border USDC payments with NGN references on Arc.</p>
+        </div>
+      </div>
+      <div class="wallet-area">
+        <div class="status-pill" id="networkStatus"><span class="dot"></span><span>Wallet not connected</span></div>
+        <div class="address-pill" id="walletAddress" hidden></div>
+        <button class="primary" id="connectWallet">Connect Wallet</button>
+      </div>
+    </header>
+
+    <section class="layout">
+      <div class="panel">
+        <nav class="tabs" aria-label="Primary">
+          <button class="tab active" data-view="sendView">Send</button>
+          <button class="tab" data-view="historyView">History</button>
+          <button class="tab" data-view="statsView">Stats</button>
+        </nav>
+
+        <section class="view active" id="sendView">
+          <div class="network-box" id="networkWarning">
+            <strong>Please switch to Arc Testnet.</strong>
+            <span>Nata Finance uses native USDC on Chain ID 5042002.</span>
+            <button class="danger" id="switchNetwork">Switch to Arc Testnet</button>
+          </div>
+
+          <div class="section-head">
+            <div>
+              <h2>Send USDC</h2>
+              <p>Attach an NGN reference and memo for cleaner cross-border records.</p>
+            </div>
+          </div>
+
+          <form id="paymentForm" novalidate>
+            <div class="form-grid">
+              <div class="field full">
+                <label for="recipient">Recipient Address</label>
+                <input id="recipient" autocomplete="off" spellcheck="false" placeholder="0x..." required>
+              </div>
+              <div class="field">
+                <label for="amount">Amount (USDC)</label>
+                <input id="amount" inputmode="decimal" placeholder="100.00" required>
+              </div>
+              <div class="field">
+                <label for="ngnReference">NGN Reference</label>
+                <input id="ngnReference" inputmode="numeric" placeholder="150000" required>
+              </div>
+              <div class="field full">
+                <label for="memo">Memo</label>
+                <textarea id="memo" maxlength="120" placeholder="Invoice, family support, school fees..." required></textarea>
+                <div class="help-row">
+                  <span>Maximum 120 characters</span>
+                  <span class="counter" id="memoCounter">0 / 120</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="preview" aria-live="polite">
+              <div class="metric">
+                <span>Fee</span>
+                <strong id="feePreview">0.000000 USDC (0.5%)</strong>
+              </div>
+              <div class="metric">
+                <span>Recipient receives</span>
+                <strong id="netPreview">0.000000 USDC</strong>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="primary" id="sendPayment" type="submit">Send Payment</button>
+              <button class="secondary" id="clearForm" type="button">Clear</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="view" id="historyView">
+          <div class="section-head">
+            <div>
+              <h2>Payment History</h2>
+              <p>Sent and received payments are read from contract storage and matched with ArcScan transaction links from events.</p>
+            </div>
+            <div class="subtabs" aria-label="History filter">
+              <button class="subtab active" data-history="sent">Sent</button>
+              <button class="subtab" data-history="received">Received</button>
+            </div>
+          </div>
+          <div id="historyList" class="history-list">
+            <div class="empty">Connect your wallet to load payment history.</div>
+          </div>
+        </section>
+
+        <section class="view" id="statsView">
+          <div class="section-head">
+            <div>
+              <h2>Protocol Stats</h2>
+              <p>Live contract counters from Arc testnet.</p>
+            </div>
+            <button class="secondary" id="refreshStats">Refresh</button>
+          </div>
+          <div class="stat-grid">
+            <div class="metric">
+              <span>Total Payments</span>
+              <strong id="totalPayments">--</strong>
+            </div>
+            <div class="metric">
+              <span>Total Volume</span>
+              <strong id="totalVolume">-- USDC</strong>
+            </div>
+            <div class="metric">
+              <span>Contract Balance</span>
+              <strong id="contractBalance">-- USDC</strong>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <aside class="side">
+        <section class="panel">
+          <div class="balance">
+            <small>Wallet Balance</small>
+            <strong id="walletBalance">-- USDC</strong>
+            <span id="balanceAddress">Connect MetaMask to view native USDC.</span>
+          </div>
+        </section>
+        <section class="panel">
+          <div class="metric">
+            <span>Contract</span>
+            <strong id="contractShort">Not configured</strong>
+          </div>
+        </section>
+      </aside>
+    </section>
+  </main>
+
+  <div class="toast-region" id="toasts" aria-live="polite" aria-atomic="true"></div>
+
+  <script>
+    const CONTRACT_ADDRESS = "PASTE_YOUR_DEPLOYED_ADDRESS_HERE";
+    const CONTRACT_ABI = [
+      {
+        "inputs": [],
+        "stateMutability": "nonpayable",
+        "type": "constructor"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "to", "type": "address" },
+          { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" }
+        ],
+        "name": "FeeWithdrawn",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "from", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "to", "type": "address" }
+        ],
+        "name": "OwnershipTransferred",
+        "type": "event"
+      },
+      {
+        "anonymous": false,
+        "inputs": [
+          { "indexed": true, "internalType": "address", "name": "sender", "type": "address" },
+          { "indexed": true, "internalType": "address", "name": "recipient", "type": "address" },
+          { "indexed": false, "internalType": "uint256", "name": "grossAmount", "type": "uint256" },
+          { "indexed": false, "internalType": "uint256", "name": "netAmount", "type": "uint256" },
+          { "indexed": false, "internalType": "uint256", "name": "fee", "type": "uint256" },
+          { "indexed": false, "internalType": "uint256", "name": "ngnReference", "type": "uint256" },
+          { "indexed": false, "internalType": "string", "name": "memo", "type": "string" },
+          { "indexed": false, "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+        ],
+        "name": "PaymentSent",
+        "type": "event"
+      },
+      {
+        "inputs": [],
+        "name": "contractBalance",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+        "name": "getReceivedPayments",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "address", "name": "sender", "type": "address" },
+              { "internalType": "address", "name": "recipient", "type": "address" },
+              { "internalType": "uint256", "name": "grossAmount", "type": "uint256" },
+              { "internalType": "uint256", "name": "netAmount", "type": "uint256" },
+              { "internalType": "uint256", "name": "fee", "type": "uint256" },
+              { "internalType": "uint256", "name": "ngnReference", "type": "uint256" },
+              { "internalType": "string", "name": "memo", "type": "string" },
+              { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+            ],
+            "internalType": "struct NataFinance.Payment[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [{ "internalType": "address", "name": "user", "type": "address" }],
+        "name": "getSentPayments",
+        "outputs": [
+          {
+            "components": [
+              { "internalType": "address", "name": "sender", "type": "address" },
+              { "internalType": "address", "name": "recipient", "type": "address" },
+              { "internalType": "uint256", "name": "grossAmount", "type": "uint256" },
+              { "internalType": "uint256", "name": "netAmount", "type": "uint256" },
+              { "internalType": "uint256", "name": "fee", "type": "uint256" },
+              { "internalType": "uint256", "name": "ngnReference", "type": "uint256" },
+              { "internalType": "string", "name": "memo", "type": "string" },
+              { "internalType": "uint256", "name": "timestamp", "type": "uint256" }
+            ],
+            "internalType": "struct NataFinance.Payment[]",
+            "name": "",
+            "type": "tuple[]"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "owner",
+        "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address payable", "name": "recipient", "type": "address" },
+          { "internalType": "uint256", "name": "ngnReference", "type": "uint256" },
+          { "internalType": "string", "name": "memo", "type": "string" }
+        ],
+        "name": "sendPayment",
+        "outputs": [],
+        "stateMutability": "payable",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalPayments",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalVolumeUSDC",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "totalVolumeWei",
+        "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address", "name": "newOwner", "type": "address" }
+        ],
+        "name": "transferOwnership",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          { "internalType": "address payable", "name": "to", "type": "address" }
+        ],
+        "name": "withdrawFees",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      }
+    ];
+
+    const ARC_CHAIN_ID_DECIMAL = 5042002n;
+    const ARC_CHAIN_ID_HEX = "0x4cef52";
+    const ARC_RPC_URL = "https://rpc.testnet.arc.network";
+    const ARC_EXPLORER = "https://testnet.arcscan.app";
+    const MEMO_LIMIT = 120;
+    const DEPLOYED = ethers.isAddress(CONTRACT_ADDRESS);
+
+    let provider;
+    let signer;
+    let account;
+    let contract;
+    let historyMode = "sent";
+    let sentPayments = [];
+    let receivedPayments = [];
+
+    const el = (id) => document.getElementById(id);
+    const connectWallet = el("connectWallet");
+    const walletAddress = el("walletAddress");
+    const networkStatus = el("networkStatus");
+    const walletBalance = el("walletBalance");
+    const balanceAddress = el("balanceAddress");
+    const networkWarning = el("networkWarning");
+    const switchNetwork = el("switchNetwork");
+    const paymentForm = el("paymentForm");
+    const recipient = el("recipient");
+    const amount = el("amount");
+    const ngnReference = el("ngnReference");
+    const memo = el("memo");
+    const memoCounter = el("memoCounter");
+    const feePreview = el("feePreview");
+    const netPreview = el("netPreview");
+    const sendPayment = el("sendPayment");
+    const clearForm = el("clearForm");
+    const historyList = el("historyList");
+    const refreshStats = el("refreshStats");
+    const totalPayments = el("totalPayments");
+    const totalVolume = el("totalVolume");
+    const contractBalance = el("contractBalance");
+    const contractShort = el("contractShort");
+
+    contractShort.textContent = DEPLOYED ? truncate(CONTRACT_ADDRESS) : "Add address";
+
+    document.querySelectorAll(".tab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll(".view").forEach((view) => view.classList.remove("active"));
+        tab.classList.add("active");
+        el(tab.dataset.view).classList.add("active");
+      });
+    });
+
+    document.querySelectorAll(".subtab").forEach((tab) => {
+      tab.addEventListener("click", () => {
+        historyMode = tab.dataset.history;
+        document.querySelectorAll(".subtab").forEach((item) => item.classList.remove("active"));
+        tab.classList.add("active");
+        renderHistory();
+      });
+    });
+
+    connectWallet.addEventListener("click", connect);
+    switchNetwork.addEventListener("click", addOrSwitchArc);
+    amount.addEventListener("input", updatePreview);
+    memo.addEventListener("input", updateCounter);
+    clearForm.addEventListener("click", resetForm);
+    refreshStats.addEventListener("click", () => withButtonSpinner(refreshStats, "Refresh", loadStats));
+    paymentForm.addEventListener("submit", submitPayment);
+
+    if (window.ethereum) {
+      window.ethereum.on("accountsChanged", (accounts) => {
+        if (!accounts.length) window.location.reload();
+        else connect();
+      });
+      window.ethereum.on("chainChanged", () => connect());
+    }
+
+    updatePreview();
+    updateCounter();
+
+    async function connect() {
+      const done = toast("pending", "Connecting wallet", "Waiting for MetaMask approval...");
+      try {
+        if (!window.ethereum) {
+          throw new Error("MetaMask is not installed. Install MetaMask, then refresh this page.");
+        }
+
+        provider = new ethers.BrowserProvider(window.ethereum);
+        const accounts = await provider.send("eth_requestAccounts", []);
+        account = ethers.getAddress(accounts[0]);
+        signer = await provider.getSigner();
+        contract = DEPLOYED ? new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer) : null;
+
+        walletAddress.hidden = false;
+        walletAddress.textContent = truncate(account);
+        connectWallet.textContent = "Connected";
+        connectWallet.disabled = true;
+        balanceAddress.textContent = account;
+
+        done.close();
+        toast("success", "Wallet connected", truncate(account));
+
+        await ensureArcState();
+        await Promise.all([loadBalance(), loadStats(), loadHistory()]);
+      } catch (error) {
+        done.close();
+        toast("error", "Connection failed", friendlyError(error));
+      }
+    }
+
+    async function ensureArcState() {
+      if (!provider) return false;
+      const network = await provider.getNetwork();
+      const onArc = network.chainId === ARC_CHAIN_ID_DECIMAL;
+
+      networkWarning.classList.toggle("show", !onArc);
+      networkStatus.querySelector(".dot").classList.toggle("ok", onArc);
+      networkStatus.querySelector("span:last-child").textContent = onArc ? "Arc Testnet" : "Wrong network";
+
+      if (!onArc) {
+        toast("error", "Wrong network", "Please switch to Arc Testnet.");
+      }
+
+      return onArc;
+    }
+
+    async function addOrSwitchArc() {
+      const done = toast("pending", "Switching network", "Opening MetaMask network request...");
+      try {
+        if (!window.ethereum) throw new Error("MetaMask is not installed.");
+        try {
+          await window.ethereum.request({
+            method: "wallet_switchEthereumChain",
+            params: [{ chainId: ARC_CHAIN_ID_HEX }]
+          });
+        } catch (switchError) {
+          if (switchError?.code !== 4902) throw switchError;
+          await window.ethereum.request({
+            method: "wallet_addEthereumChain",
+            params: [{
+              chainId: ARC_CHAIN_ID_HEX,
+              chainName: "Arc Testnet",
+              nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
+              rpcUrls: [ARC_RPC_URL],
+              blockExplorerUrls: [ARC_EXPLORER]
+            }]
+          });
+        }
+        provider = new ethers.BrowserProvider(window.ethereum);
+        signer = await provider.getSigner();
+        contract = DEPLOYED ? new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer) : null;
+        done.close();
+        toast("success", "Network ready", "Arc Testnet is active.");
+        await Promise.all([ensureArcState(), loadBalance(), loadStats(), loadHistory()]);
+      } catch (error) {
+        done.close();
+        toast("error", "Network switch failed", friendlyError(error));
+      }
+    }
+
+    async function loadBalance() {
+      if (!provider || !account) return;
+      const done = toast("pending", "Loading balance", "Reading native USDC balance...");
+      try {
+        const balance = await provider.getBalance(account);
+        walletBalance.textContent = `${formatUsdc(balance, 6)} USDC`;
+        done.close();
+      } catch (error) {
+        done.close();
+        toast("error", "Balance failed", friendlyError(error));
+      }
+    }
+
+    async function loadStats() {
+      if (!requireContract()) return;
+      const done = toast("pending", "Refreshing stats", "Reading contract totals...");
+      try {
+        const [payments, volumeWhole, balance] = await Promise.all([
+          contract.totalPayments(),
+          contract.totalVolumeUSDC(),
+          contract.contractBalance()
+        ]);
+
+        totalPayments.textContent = Number(payments).toLocaleString();
+        totalVolume.textContent = `${Number(volumeWhole).toLocaleString()} USDC`;
+        contractBalance.textContent = `${formatUsdc(balance, 6)} USDC`;
+        done.close();
+      } catch (error) {
+        done.close();
+        toast("error", "Stats failed", friendlyError(error));
+      }
+    }
+
+    async function loadHistory() {
+      if (!account) {
+        historyList.innerHTML = `<div class="empty">Connect your wallet to load payment history.</div>`;
+        return;
+      }
+      if (!requireContract()) return;
+
+      historyList.innerHTML = `<div class="loading-state"><span class="spinner" style="display:inline-block"></span><br>Loading payment history...</div>`;
+      try {
+        const [sent, received, sentLogs, receivedLogs] = await Promise.all([
+          contract.getSentPayments(account),
+          contract.getReceivedPayments(account),
+          contract.queryFilter(contract.filters.PaymentSent(account, null), 0, "latest"),
+          contract.queryFilter(contract.filters.PaymentSent(null, account), 0, "latest")
+        ]);
+
+        sentPayments = normalizePayments(sent, "sent", sentLogs);
+        receivedPayments = normalizePayments(received, "received", receivedLogs);
+        renderHistory();
+      } catch (error) {
+        historyList.innerHTML = `<div class="empty">History could not be loaded.</div>`;
+        toast("error", "History failed", friendlyError(error));
+      }
+    }
+
+    function normalizePayments(payments, direction, logs) {
+      const unusedLogs = [...logs];
+      return payments.map((payment) => {
+        const timestamp = BigInt(payment.timestamp);
+        const logIndex = unusedLogs.findIndex((log) =>
+          log.args.sender.toLowerCase() === payment.sender.toLowerCase() &&
+          log.args.recipient.toLowerCase() === payment.recipient.toLowerCase() &&
+          log.args.grossAmount === payment.grossAmount &&
+          log.args.netAmount === payment.netAmount &&
+          log.args.fee === payment.fee &&
+          log.args.ngnReference === payment.ngnReference &&
+          BigInt(log.args.timestamp) === timestamp
+        );
+        const log = logIndex >= 0 ? unusedLogs.splice(logIndex, 1)[0] : null;
+
+        return {
+          direction,
+          sender: payment.sender,
+          recipient: payment.recipient,
+          grossAmount: payment.grossAmount,
+          netAmount: payment.netAmount,
+          fee: payment.fee,
+          ngnReference: payment.ngnReference,
+          memo: payment.memo,
+          timestamp,
+          txHash: log ? log.transactionHash : ""
+        };
+      }).sort((a, b) => Number(b.timestamp - a.timestamp));
+    }
+
+    function renderHistory() {
+      const list = historyMode === "sent" ? sentPayments : receivedPayments;
+      if (!list.length) {
+        historyList.innerHTML = `<div class="empty">No ${historyMode} payments yet.</div>`;
+        return;
+      }
+
+      historyList.innerHTML = list.map((payment) => {
+        const isSent = payment.direction === "sent";
+        const counterpart = isSent ? payment.recipient : payment.sender;
+        const date = new Date(Number(payment.timestamp) * 1000).toLocaleString([], {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit"
+        });
+        const txLink = payment.txHash
+          ? `<a href="${ARC_EXPLORER}/tx/${payment.txHash}" target="_blank" rel="noreferrer">ArcScan</a>`
+          : `<span>No tx link</span>`;
+
+        return `
+          <article class="payment-row">
+            <div>
+              <h3>${escapeHtml(payment.memo)}</h3>
+              <dl>
+                <dt>Counterpart</dt><dd>${isSent ? "To" : "From"} ${truncate(counterpart)}</dd>
+                <dt>Gross</dt><dd>Gross ${formatUsdc(payment.grossAmount, 6)} USDC</dd>
+                <dt>Net</dt><dd>Net ${formatUsdc(payment.netAmount, 6)} USDC</dd>
+                <dt>Fee</dt><dd>Fee ${formatUsdc(payment.fee, 6)} USDC</dd>
+                <dt>NGN</dt><dd>NGN ${Number(payment.ngnReference).toLocaleString()}</dd>
+                <dt>Date</dt><dd>${date}</dd>
+              </dl>
+            </div>
+            <div class="amount-stack ${isSent ? "sent" : "received"}">
+              <strong>${isSent ? "-" : "+"}${formatUsdc(isSent ? payment.grossAmount : payment.netAmount, 6)} USDC</strong>
+              ${txLink}
+            </div>
+          </article>
+        `;
+      }).join("");
+    }
+
+    async function submitPayment(event) {
+      event.preventDefault();
+
+      const validation = validatePayment();
+      if (!validation.ok) {
+        toast("error", "Check the form", validation.message);
+        return;
+      }
+
+      if (!await ensureReadyForTx()) return;
+
+      await withButtonSpinner(sendPayment, "Send Payment", async () => {
+        const pending = toast("pending", "Confirm payment", "Approve the transaction in MetaMask.");
+        try {
+          const value = ethers.parseUnits(amount.value.trim(), 18);
+          const tx = await contract.sendPayment(
+            ethers.getAddress(recipient.value.trim()),
+            BigInt(ngnReference.value.trim()),
+            memo.value.trim(),
+            { value }
+          );
+
+          pending.update("pending", "Transaction pending", `Hash: ${truncate(tx.hash)}`);
+          const receipt = await tx.wait();
+          pending.close();
+
+          toast(
+            "success",
+            "Payment confirmed",
+            `Block ${receipt.blockNumber}. <a href="${ARC_EXPLORER}/tx/${tx.hash}" target="_blank" rel="noreferrer">View transaction</a>`
+          );
+
+          resetForm();
+          await Promise.all([loadBalance(), loadStats(), loadHistory()]);
+        } catch (error) {
+          pending.close();
+          toast("error", "Payment failed", friendlyError(error));
+        }
+      });
+    }
+
+    function validatePayment() {
+      if (!account) return { ok: false, message: "Connect your wallet first." };
+      if (!DEPLOYED) return { ok: false, message: "Add your deployed contract address in index.html." };
+      if (!ethers.isAddress(recipient.value.trim())) return { ok: false, message: "Enter a valid recipient address." };
+      if (ethers.getAddress(recipient.value.trim()) === account) return { ok: false, message: "You cannot send to yourself." };
+      if (!amount.value.trim() || Number(amount.value) <= 0) return { ok: false, message: "Enter an amount greater than zero." };
+      if (!/^\d+(\.\d{1,18})?$/.test(amount.value.trim())) return { ok: false, message: "Amount can have up to 18 decimals." };
+      if (!ngnReference.value.trim() || !/^\d+$/.test(ngnReference.value.trim())) return { ok: false, message: "Enter a whole-number NGN reference." };
+      if (!memo.value.trim()) return { ok: false, message: "Memo is required." };
+      if (memo.value.trim().length > MEMO_LIMIT) return { ok: false, message: "Memo must be 120 characters or less." };
+      return { ok: true };
+    }
+
+    async function ensureReadyForTx() {
+      if (!await ensureArcState()) return falseToast("Wrong network", "Please switch to Arc Testnet.");
+      if (!requireContract()) return false;
+
+      const value = ethers.parseUnits(amount.value.trim(), 18);
+      const balance = await provider.getBalance(account);
+      if (balance < value) return falseToast("Insufficient balance", "Insufficient USDC balance.");
+      return true;
+    }
+
+    function updatePreview() {
+      try {
+        if (!amount.value.trim() || Number(amount.value) <= 0) {
+          feePreview.textContent = "0.000000 USDC (0.5%)";
+          netPreview.textContent = "0.000000 USDC";
+          return;
+        }
+        const value = ethers.parseUnits(amount.value.trim(), 18);
+        const fee = value / 200n;
+        const net = value - fee;
+        feePreview.textContent = `${formatUsdc(fee, 6)} USDC (0.5%)`;
+        netPreview.textContent = `${formatUsdc(net, 6)} USDC`;
+      } catch {
+        feePreview.textContent = "Invalid amount";
+        netPreview.textContent = "Invalid amount";
+      }
+    }
+
+    function updateCounter() {
+      const count = memo.value.length;
+      memoCounter.textContent = `${count} / ${MEMO_LIMIT}`;
+      memoCounter.className = `counter ${count > MEMO_LIMIT ? "bad" : count > 100 ? "warn" : ""}`;
+    }
+
+    function resetForm() {
+      paymentForm.reset();
+      updatePreview();
+      updateCounter();
+    }
+
+    async function withButtonSpinner(button, fallbackLabel, task) {
+      const previous = button.textContent || fallbackLabel;
+      button.disabled = true;
+      button.innerHTML = `<span class="spinner" style="display:inline-block;vertical-align:-4px;margin-right:8px"></span>${previous}`;
+      try {
+        await task();
+      } finally {
+        button.disabled = false;
+        button.textContent = fallbackLabel;
+      }
+    }
+
+    function requireContract() {
+      if (!DEPLOYED) {
+        totalPayments.textContent = "--";
+        totalVolume.textContent = "-- USDC";
+        contractBalance.textContent = "-- USDC";
+        historyList.innerHTML = `<div class="empty">Deploy the contract, then replace PASTE_YOUR_DEPLOYED_ADDRESS_HERE in index.html.</div>`;
+        return falseToast("Contract address missing", "Replace PASTE_YOUR_DEPLOYED_ADDRESS_HERE with your deployed address.");
+      }
+      if (!contract) contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer || provider);
+      return true;
+    }
+
+    function falseToast(title, message) {
+      toast("error", title, message);
+      return false;
+    }
+
+    function toast(type, title, message) {
+      const node = document.createElement("div");
+      node.className = `toast ${type}`;
+      const icon = type === "pending"
+        ? `<span class="spinner"></span>`
+        : `<span class="icon ${type}">${type === "success" ? "✓" : "!"}</span>`;
+      node.innerHTML = `${icon}<div><span class="toast-title">${title}</span><span>${message}</span></div>`;
+      el("toasts").appendChild(node);
+
+      const api = {
+        update(nextType, nextTitle, nextMessage) {
+          node.className = `toast ${nextType}`;
+          const nextIcon = nextType === "pending"
+            ? `<span class="spinner"></span>`
+            : `<span class="icon ${nextType}">${nextType === "success" ? "✓" : "!"}</span>`;
+          node.innerHTML = `${nextIcon}<div><span class="toast-title">${nextTitle}</span><span>${nextMessage}</span></div>`;
+        },
+        close() {
+          node.remove();
+        }
+      };
+
+      if (type !== "pending") {
+        setTimeout(() => node.remove(), 6800);
+      }
+
+      return api;
+    }
+
+    function friendlyError(error) {
+      const raw = error?.shortMessage || error?.reason || error?.data?.message || error?.message || String(error);
+      if (error?.code === 4001 || /user rejected|rejected request|denied transaction/i.test(raw)) {
+        return "Transaction cancelled.";
+      }
+      if (/insufficient funds|exceeds balance/i.test(raw)) {
+        return "Insufficient USDC balance.";
+      }
+      if (/network|chain|unsupported/i.test(raw)) {
+        return "Please switch to Arc Testnet.";
+      }
+      const revert = raw.match(/reverted(?: with reason string)? ['"]?([^'"]+)['"]?/i);
+      return revert ? revert[1] : raw.replace(/^execution reverted:?\s*/i, "");
+    }
+
+    function truncate(value) {
+      return value ? `${value.slice(0, 6)}...${value.slice(-4)}` : "--";
+    }
+
+    function formatUsdc(value, decimals) {
+      const formatted = ethers.formatUnits(value, 18);
+      const [whole, fraction = ""] = formatted.split(".");
+      const trimmed = fraction.slice(0, decimals).padEnd(decimals, "0");
+      return `${Number(whole).toLocaleString()}.${trimmed}`;
+    }
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+  </script>
+</body>
+</html>
