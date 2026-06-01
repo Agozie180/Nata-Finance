@@ -29,6 +29,37 @@ Cross-border payments for African users are often slow, expensive, and difficult
 6. The protocol fee remains in the contract for the owner to withdraw.
 7. Both sender and recipient can view the payment in their history.
 
+## Nata Finance in Brief
+
+Nata Finance is a polished Web3 payment layer built for fast, secure native USDC settlement on Arc testnet. It combines blockchain-native transfers with local Nigerian payment context so users can move value across borders without losing the real-world meaning of every transaction.
+
+### Market Snapshot
+
+| Asset | Price (USD) |
+| --- | --- |
+| Bitcoin (BTC) | ![BTC Price](https://img.shields.io/coin/price/bitcoin/usd?style=flat-square) |
+| Ethereum (ETH) | ![ETH Price](https://img.shields.io/coin/price/ethereum/usd?style=flat-square) |
+| Solana (SOL) | ![SOL Price](https://img.shields.io/coin/price/solana/usd?style=flat-square) |
+| USD Coin (USDC) | ![USDC Price](https://img.shields.io/coin/price/usd-coin/usd?style=flat-square) |
+| Arbitrum (ARB) | ![ARB Price](https://img.shields.io/coin/price/arbitrum/usd?style=flat-square) |
+
+## Frequently Asked Questions
+
+### What can I do with Nata Finance?
+Nata Finance lets you send native USDC on Arc testnet with a mandatory NGN reference and memo, giving every transfer a clear local payment context.
+
+### Which network and token does it support?
+It is built for Arc testnet and works with native USDC transfers using MetaMask.
+
+### How is the protocol fee handled?
+A transparent 0.5% fee is collected by the smart contract and can be withdrawn by the contract owner. The sender sees both gross and net amounts before confirming.
+
+### Can recipients see their payment history?
+Yes. Both senders and recipients can view their own payment history after connecting a wallet, with transaction details and ArcScan links.
+
+### Do I need MetaMask?
+Yes. MetaMask is used to connect the wallet, sign transactions, and switch to Arc testnet.
+
 ## Tech Stack
 
 - Solidity 0.8.20
@@ -132,4 +163,4 @@ After deployment, open `deployments/arc-testnet.json`, copy the `address`, and p
 
 ## Footer
 
-Built by Archie | Nata Finance © 2025
+Developed by [Chiagozie50](https://x.com/chiagozie50) | Nata Finance © 2025
