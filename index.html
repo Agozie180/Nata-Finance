@@ -1044,44 +1044,25 @@
     }
 
     async function loadHistory() {
-  if (!account) {
-    historyList.innerHTML = '<div class="empty">Connect your wallet to load payment history.</div>';
-    return;
-  }
-  if (!requireContract()) return;
-  historyList.innerHTML = '<div class="loading-state"><span class="spinner" style="display:inline-block"></span> Loading...</div>';
-  try {
-    const sent = await contract.getSentPayments(account);
-    const received = await contract.getReceivedPayments(account);
-    const activeTab = document.querySelector('.history-tab-btn.active')?.dataset.tab || 'sent';
-    const payments = activeTab === 'sent' ? sent : received;
-    if (payments.length === 0) {
-      historyList.innerHTML = '<div class="empty">No transactions yet.</div>';
-      return;
+      if (!account) {
+        historyList.innerHTML = '<div class="empty">Connect your wallet to load payment history.</div>';
+        return;
+      }
+      if (!requireContract()) return;
+      historyList.innerHTML = '<div class="loading-state"><span class="spinner" style="display:inline-block"></span> Loading...</div>';
+      try {
+        const sent = await contract.getSentPayments(account);
+        const received = await contract.getReceivedPayments(account);
+        
+        sentPayments = normalizePayments(sent, "sent", []);
+        receivedPayments = normalizePayments(received, "received", []);
+        
+        renderHistory();
+      } catch (error) {
+        historyList.innerHTML = '<div class="empty">Could not load history. Make sure you are on Arc Testnet.</div>';
+        console.error(error);
+      }
     }
-    historyList.innerHTML = payments.map(p => {
-      const date = new Date(Number(p.timestamp) * 1000).toLocaleString();
-      const gross = formatUsdc(p.grossAmount, 18);
-      const net = formatUsdc(p.netAmount, 18);
-      const fee = formatUsdc(p.fee, 18);
-      const counterpart = activeTab === 'sent'
-        ? p.recipient.slice(0,6) + '...' + p.recipient.slice(-4)
-        : p.sender.slice(0,6) + '...' + p.sender.slice(-4);
-      return <div class="payment-card">
-        <div><strong>${activeTab === 'sent' ? 'To' : 'From'}:</strong> ${counterpart}</div>
-        <div><strong>Amount:</strong> ${gross} USDC</div>
-        <div><strong>Received:</strong> ${net} USDC</div>
-        <div><strong>Fee:</strong> ${fee} USDC</div>
-        <div><strong>NGN Ref:</strong> ${p.ngnReference.toString()}</div>
-        <div><strong>Memo:</strong> ${p.memo}</div>
-        <div><strong>Date:</strong> ${date}</div>
-      </div>;
-    }).join('');
-  } catch (error) {
-    historyList.innerHTML = '<div class="empty">Could not load history. Make sure you are on Arc Testnet.</div>';
-    console.error(error);
-  }
-}
 
     function normalizePayments(payments, direction, logs) {
       const unusedLogs = [...logs];
