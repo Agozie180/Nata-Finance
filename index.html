@@ -581,6 +581,10 @@
       z-index: 60;
     }
 
+    .dropdown-menu[hidden] {
+      display: none !important;
+    }
+
     .dropdown-menu .menu-row { color: var(--panel-text); font-weight:700; overflow-wrap:anywhere; }
     .menu-item { text-align: left; padding:8px 10px; border-radius:8px; background:transparent; border:0; color:var(--panel-text); cursor:pointer; }
     .menu-item:hover { background: rgba(255,255,255,0.03); }
@@ -621,6 +625,12 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: var(--panel-2);
+    }
+
+    .preview .metric,
+    .preview .metric span,
+    .preview .metric strong {
+      color: var(--panel-text);
     }
 
     .metric span {
@@ -1371,6 +1381,15 @@
     });
     paymentForm.addEventListener("submit", submitPayment);
 
+    document.addEventListener("click", (event) => {
+      if (walletMenu && !walletMenu.hidden && !walletMenu.contains(event.target) && event.target !== connectWallet) {
+        walletMenu.hidden = true;
+      }
+      if (networkMenu && !networkMenu.hidden && !networkMenu.contains(event.target) && event.target !== networkStatus) {
+        networkMenu.hidden = true;
+      }
+    });
+
     if (window.ethereum) {
       window.ethereum.on("accountsChanged", (accounts) => {
         if (!accounts.length) window.location.reload();
@@ -1400,7 +1419,7 @@
         connectWallet.textContent = "Connected ▾";
         // keep button enabled so it can toggle the menu
         connectWallet.disabled = false;
-        walletMenuAddress.textContent = account;
+        walletMenuAddress.textContent = truncate(account);
         balanceAddress.textContent = account;
 
         done.close();
