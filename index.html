@@ -100,6 +100,7 @@
       gap: 10px;
       flex-wrap: wrap;
       justify-content: flex-end;
+      position: relative;
     }
 
     .status-pill, .address-pill {
@@ -553,12 +554,37 @@
       border: 1px solid var(--line);
       border-radius: 8px;
       background: #090d13;
-      color: var(--text);
+      color: var(--panel-text);
       min-height: 48px;
       padding: 12px 13px;
       outline: none;
       transition: border-color 0.18s ease, box-shadow 0.18s ease;
     }
+
+    input::placeholder, textarea::placeholder {
+      color: rgba(248,250,252,0.65);
+    }
+
+    /* Dropdown menus for wallet and network */
+    .dropdown-menu {
+      position: absolute;
+      right: 0;
+      top: 56px;
+      background: #0b1220;
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 10px;
+      border-radius: 10px;
+      display: grid;
+      gap: 8px;
+      min-width: 200px;
+      box-shadow: 0 14px 30px rgba(2,6,23,0.6);
+      z-index: 60;
+    }
+
+    .dropdown-menu .menu-row { color: var(--panel-text); font-weight:700; overflow-wrap:anywhere; }
+    .menu-item { text-align: left; padding:8px 10px; border-radius:8px; background:transparent; border:0; color:var(--panel-text); cursor:pointer; }
+    .menu-item:hover { background: rgba(255,255,255,0.03); }
+    #net-arc-check { float:right; opacity:0.9; }
 
     textarea {
       min-height: 112px;
@@ -959,9 +985,19 @@
           </div>
         </div>
         <div class="wallet-area">
-          <div class="status-pill" id="networkStatus"><span class="dot"></span><span>Wallet not connected</span></div>
+          <div class="status-pill" id="networkStatus" role="button" tabindex="0"><span class="dot"></span><span>Wallet not connected</span></div>
           <div class="address-pill" id="walletAddress" hidden></div>
           <button class="primary" id="connectWallet">Connect Wallet</button>
+
+          <div id="walletMenu" class="dropdown-menu" hidden>
+            <div class="menu-row" id="walletMenuAddress"></div>
+            <button class="secondary menu-item" id="copyAddress">Copy address</button>
+            <button class="danger menu-item" id="disconnectWallet">Disconnect</button>
+          </div>
+
+          <div id="networkMenu" class="dropdown-menu" hidden>
+            <button class="menu-item" data-chain="5042002" id="net-arc">Arc Testnet <span id="net-arc-check">✓</span></button>
+          </div>
         </div>
       </header>
 
@@ -997,13 +1033,14 @@
                 <label for="amount">Amount (USDC)</label>
                 <input id="amount" inputmode="decimal" placeholder="100.00" required>
               </div>
-              <div class="field">
-                <label for="ngnReference">NGN Reference</label>
-                <input id="ngnReference" inputmode="numeric" placeholder="150000" required>
+              <div class="field" id="ngnField">
+                <label>NGN Equivalent</label>
+                <div id="ngnEquivalent" style="min-height:48px;padding:12px 13px;border-radius:8px;background:#090d13;border:1px solid var(--line);color:var(--panel-text);">₦0</div>
+                <div class="help-row" style="margin-top:8px;color:var(--muted);font-size:0.86rem"><span>Fixed rate: 1 USDC = ₦1,375 (Testnet rate)</span></div>
               </div>
               <div class="field full">
-                <label for="memo">Memo</label>
-                <textarea id="memo" maxlength="120" placeholder="Invoice, family support, school fees..." required></textarea>
+                <label for="memo">Memo (optional)</label>
+                <textarea id="memo" maxlength="120" placeholder="Invoice, family support, school fees..."></textarea>
                 <div class="help-row">
                   <span>Maximum 120 characters</span>
                   <span class="counter" id="memoCounter">0 / 120</span>
@@ -1265,6 +1302,13 @@
     const connectWallet = el("connectWallet");
     const walletAddress = el("walletAddress");
     const networkStatus = el("networkStatus");
+    const walletMenu = el("walletMenu");
+    const walletMenuAddress = el("walletMenuAddress");
+    const copyAddress = el("copyAddress");
+    const disconnectWallet = el("disconnectWallet");
+    const networkMenu = el("networkMenu");
+    const netArc = el("net-arc");
+    const netArcCheck = el("net-arc-check");
     const walletBalance = el("walletBalance");
     const balanceAddress = el("balanceAddress");
     const networkWarning = el("networkWarning");
@@ -1272,11 +1316,11 @@
     const paymentForm = el("paymentForm");
     const recipient = el("recipient");
     const amount = el("amount");
-    const ngnReference = el("ngnReference");
     const memo = el("memo");
     const memoCounter = el("memoCounter");
     const feePreview = el("feePreview");
     const netPreview = el("netPreview");
+    const ngnEquivalent = el("ngnEquivalent");
     const sendPayment = el("sendPayment");
     const clearForm = el("clearForm");
     const historyList = el("historyList");
@@ -1310,11 +1354,15 @@
       });
     });
 
-    connectWallet.addEventListener("click", connect);
+    connectWallet.addEventListener("click", handleConnectClick);
     switchNetwork.addEventListener("click", addOrSwitchArc);
+    networkStatus.addEventListener("click", toggleNetworkMenu);
     amount.addEventListener("input", updatePreview);
     memo.addEventListener("input", updateCounter);
     clearForm.addEventListener("click", resetForm);
+    copyAddress.addEventListener("click", copyConnectedAddress);
+    disconnectWallet.addEventListener("click", disconnect);
+    netArc.addEventListener("click", async () => { await addOrSwitchArc(); updateNetworkMenu(); });
     refreshStats.addEventListener("click", () => withButtonSpinner(refreshStats, "Refresh", loadStats));
     launchApp.addEventListener("click", openApp);
     backToHome.addEventListener("click", (event) => {
@@ -1349,8 +1397,10 @@
 
         walletAddress.hidden = false;
         walletAddress.textContent = truncate(account);
-        connectWallet.textContent = "Connected";
-        connectWallet.disabled = true;
+        connectWallet.textContent = "Connected ▾";
+        // keep button enabled so it can toggle the menu
+        connectWallet.disabled = false;
+        walletMenuAddress.textContent = account;
         balanceAddress.textContent = account;
 
         done.close();
@@ -1358,6 +1408,7 @@
 
         await ensureArcState();
         await Promise.all([loadBalance(), loadStats(), loadHistory()]);
+        updateNetworkMenu();
       } catch (error) {
         done.close();
         toast("error", "Connection failed", friendlyError(error));
@@ -1413,6 +1464,7 @@
         done.close();
         toast("success", "Network ready", "Arc Testnet is active.");
         await Promise.all([ensureArcState(), loadBalance(), loadStats(), loadHistory()]);
+        updateNetworkMenu();
       } catch (error) {
         done.close();
         toast("error", "Network switch failed", friendlyError(error));
@@ -1577,10 +1629,14 @@
         const pending = toast("pending", "Confirm payment", "Approve the transaction in MetaMask.");
         try {
           const value = ethers.parseUnits(amount.value.trim(), 18);
+          const ngnRefNumeric = Math.round(Number(amount.value.trim()) * 1375);
+          const ngnRef = BigInt(ngnRefNumeric);
+          const memoText = memo.value.trim() || "";
+
           const tx = await contract.sendPayment(
             ethers.getAddress(recipient.value.trim()),
-            BigInt(ngnReference.value.trim()),
-            memo.value.trim(),
+            ngnRef,
+            memoText,
             { value }
           );
 
@@ -1610,8 +1666,6 @@
       if (ethers.getAddress(recipient.value.trim()) === account) return { ok: false, message: "You cannot send to yourself." };
       if (!amount.value.trim() || Number(amount.value) <= 0) return { ok: false, message: "Enter an amount greater than zero." };
       if (!/^\d+(\.\d{1,18})?$/.test(amount.value.trim())) return { ok: false, message: "Amount can have up to 18 decimals." };
-      if (!ngnReference.value.trim() || !/^\d+$/.test(ngnReference.value.trim())) return { ok: false, message: "Enter a whole-number NGN reference." };
-      if (!memo.value.trim()) return { ok: false, message: "Memo is required." };
       if (memo.value.trim().length > MEMO_LIMIT) return { ok: false, message: "Memo must be 120 characters or less." };
       return { ok: true };
     }
@@ -1631,6 +1685,7 @@
         if (!amount.value.trim() || Number(amount.value) <= 0) {
           feePreview.textContent = "0.000000 USDC (0.5%)";
           netPreview.textContent = "0.000000 USDC";
+          ngnEquivalent.textContent = "₦0";
           return;
         }
         const value = ethers.parseUnits(amount.value.trim(), 18);
@@ -1638,9 +1693,14 @@
         const net = value - fee;
         feePreview.textContent = `${formatUsdc(fee, 6)} USDC (0.5%)`;
         netPreview.textContent = `${formatUsdc(net, 6)} USDC`;
+        // NGN equivalent at fixed rate
+        const numeric = Number(amount.value.trim()) || 0;
+        const ngn = Math.round(numeric * 1375);
+        ngnEquivalent.textContent = `₦${ngn.toLocaleString()}`;
       } catch {
         feePreview.textContent = "Invalid amount";
         netPreview.textContent = "Invalid amount";
+        ngnEquivalent.textContent = "₦0";
       }
     }
 
@@ -1650,10 +1710,61 @@
       memoCounter.className = `counter ${count > MEMO_LIMIT ? "bad" : count > 100 ? "warn" : ""}`;
     }
 
+    function handleConnectClick() {
+      if (!account) return connect();
+      // toggle menu
+      if (walletMenu.hasAttribute('hidden')) {
+        walletMenu.removeAttribute('hidden');
+      } else {
+        walletMenu.setAttribute('hidden', '');
+      }
+    }
+
+    function toggleNetworkMenu() {
+      if (networkMenu.hasAttribute('hidden')) networkMenu.removeAttribute('hidden');
+      else networkMenu.setAttribute('hidden', '');
+    }
+
+    function updateNetworkMenu() {
+      // show check next to Arc if on Arc
+      if (!provider) { netArcCheck.style.visibility = 'hidden'; return; }
+      provider.getNetwork().then((network) => {
+        const onArc = network.chainId === ARC_CHAIN_ID_DECIMAL;
+        netArcCheck.style.visibility = onArc ? 'visible' : 'hidden';
+      }).catch(() => netArcCheck.style.visibility = 'hidden');
+    }
+
+    function copyConnectedAddress() {
+      if (!account) return toast('error', 'No address', 'Wallet not connected.');
+      navigator.clipboard?.writeText(account).then(() => {
+        toast('success', 'Copied', truncate(account));
+      }).catch(() => toast('error', 'Copy failed', 'Unable to copy address.'));
+    }
+
+    function disconnect() {
+      account = null;
+      provider = null;
+      signer = null;
+      contract = null;
+      walletAddress.hidden = true;
+      walletAddress.textContent = '';
+      connectWallet.textContent = 'Connect Wallet';
+      connectWallet.disabled = false;
+      walletMenu.setAttribute('hidden', '');
+      networkMenu.setAttribute('hidden', '');
+      networkStatus.querySelector('.dot').classList.remove('ok');
+      networkStatus.querySelector('span:last-child').textContent = 'Wallet not connected';
+      walletBalance.textContent = '-- USDC';
+      balanceAddress.textContent = 'Connect MetaMask to view native USDC.';
+      historyList.innerHTML = '<div class="empty">Connect your wallet to load payment history.</div>';
+      toast('success', 'Disconnected', 'Wallet disconnected.');
+    }
+
     function resetForm() {
       paymentForm.reset();
       updatePreview();
       updateCounter();
+      if (ngnEquivalent) ngnEquivalent.textContent = "₦0";
     }
 
     async function withButtonSpinner(button, fallbackLabel, task) {
