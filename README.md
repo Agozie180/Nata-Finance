@@ -1,166 +1,88 @@
-# Nata Finance
+# 🌍 Nata Finance
 
-Fast cross-border USDC payments for the NGN corridor on Arc testnet.
+> Cross-border USDC payments with NGN references, built on Arc.
 
-Nata Finance is a lightweight Web3 payment app that lets users send native USDC on Arc with Nigerian naira references and payment memos. It is designed for African freelancers, families, merchants, and small businesses that need clearer, cheaper, and faster cross-border settlement without a traditional bank wire flow.
+---
 
-## Problem
+## What is Nata Finance?
 
-Cross-border payments for African users are often slow, expensive, and difficult to reconcile. The NGN-to-USDC corridor is especially important for people who earn, save, or settle invoices in dollars while still thinking about local obligations in naira. Nata Finance keeps the USDC transfer on-chain while preserving the NGN reference and memo that make the payment understandable later.
+Nata Finance is a decentralized payment protocol that lets anyone send 
+USDC across borders in seconds, no bank, no middleman, no delay.
 
-## Features
+Built specifically for the NGN↔USDC corridor, every payment can carry 
+an NGN reference amount and a memo, so both sender and recipient always 
+know exactly what the payment is for.
 
-- 🚀 Native USDC payments on Arc testnet
-- 💸 Automatic 0.5% protocol fee retained by the contract
-- 🇳🇬 NGN reference field for local payment context
-- 📝 Required memo with a 120-character limit
-- 📚 Sent and received payment history
-- 🔎 ArcScan links for confirmed transactions
-- 🦊 MetaMask connection and one-click Arc testnet setup
-- 📊 Live protocol stats for total payments, total volume, and contract balance
+---
+
+## The Problem
+
+Sending money internationally from Nigeria is still broken:
+
+- ❌ 3–5 day delays
+- ❌ 10–15% lost to fees and exchange rate manipulation
+- ❌ Bank restrictions on how much you can send
+- ❌ No transparency on where your money is at any point
+
+Nata Finance removes every one of these barriers.
+
+---
 
 ## How It Works
 
-1. The sender connects MetaMask and switches to Arc testnet.
-2. The sender enters a recipient address, USDC amount, NGN reference, and memo.
-3. The frontend previews the 0.5% protocol fee and recipient net amount.
-4. The sender confirms the transaction in MetaMask.
-5. The contract forwards the net native USDC amount to the recipient.
-6. The protocol fee remains in the contract for the owner to withdraw.
-7. Both sender and recipient can view the payment in their history.
+1. Connect your MetaMask wallet
+2. Enter the recipient's wallet address
+3. Enter the amount in USDC
+4. Attach an NGN reference and a payment memo
+5. Hit Send — the payment lands in seconds
 
-## Nata Finance in Brief
+A transparent 0.5% protocol fee is applied. That's it.
+No hidden charges. No spread. No surprises.
 
-Nata Finance is a polished Web3 payment layer built for fast, secure native USDC settlement on Arc testnet. It combines blockchain-native transfers with local Nigerian payment context so users can move value across borders without losing the real-world meaning of every transaction.
+---
 
-### Market Snapshot
+## Features
 
-| Asset | Price (USD) |
-| --- | --- |
-| Bitcoin (BTC) | ![BTC Price](https://img.shields.io/coin/price/bitcoin/usd?style=flat-square) |
-| Ethereum (ETH) | ![ETH Price](https://img.shields.io/coin/price/ethereum/usd?style=flat-square) |
-| Solana (SOL) | ![SOL Price](https://img.shields.io/coin/price/solana/usd?style=flat-square) |
-| USD Coin (USDC) | ![USDC Price](https://img.shields.io/coin/price/usd-coin/usd?style=flat-square) |
-| Arbitrum (ARB) | ![ARB Price](https://img.shields.io/coin/price/arbitrum/usd?style=flat-square) |
+- ✅ Send USDC cross-border instantly
+- ✅ Attach NGN reference to every payment
+- ✅ Add a memo for payment context
+- ✅ Full on-chain payment history (sent & received)
+- ✅ Live fee preview before sending
+- ✅ Protocol stats — total volume and total payments
+- ✅ 0.5% transparent fee. Nothing else.
 
-## Frequently Asked Questions
+---
 
-### What can I do with Nata Finance?
-Nata Finance lets you send native USDC on Arc testnet with a mandatory NGN reference and memo, giving every transfer a clear local payment context.
+## Built On
 
-### Which network and token does it support?
-It is built for Arc testnet and works with native USDC transfers using MetaMask.
+| Layer | Technology |
+|-------|-----------|
+| Blockchain | Arc Testnet (Chain ID: 5042002) |
+| Smart Contract | Solidity 0.8.20 |
+| Frontend | HTML, CSS, Ethers.js v6 |
+| Wallet | MetaMask |
+| Deployment | Hardhat |
 
-### How is the protocol fee handled?
-A transparent 0.5% fee is collected by the smart contract and can be withdrawn by the contract owner. The sender sees both gross and net amounts before confirming.
+> Arc is built by Circle — the company behind USDC.
+> On Arc, USDC is the native gas token.
+---
 
-### Can recipients see their payment history?
-Yes. Both senders and recipients can view their own payment history after connecting a wallet, with transaction details and ArcScan links.
+## Live App
 
-### Do I need MetaMask?
-Yes. MetaMask is used to connect the wallet, sign transactions, and switch to Arc testnet.
+🔗 https://nata-finance.vercel.app/
 
-## Tech Stack
+---
 
-- Solidity 0.8.20
-- Ethers.js v6
-- Arc Testnet
-- MetaMask
-- Hardhat
+## Smart Contract
 
-## Getting Started
+| Network | Arc Testnet |
+|---------|------------|
+| Address | `0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2` |
+| Explorer | [View on ArcScan](https://testnet.arcscan.app/address/0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2) |
 
-1. Clone the repository.
+---
 
-   ```bash
-   git clone https://github.com/Agozie180/Nata-Finance.git
-   cd Nata-Finance
-   ```
 
-2. Install dependencies.
+Developed by Chiagozie50 on X
 
-   ```bash
-   npm install
-   ```
-
-3. Create your environment file.
-
-   ```bash
-   cp .env.example .env
-   ```
-
-4. Add your deployer private key to `.env`.
-
-5. Compile the contract.
-
-   ```bash
-   npm run compile
-   ```
-
-6. Deploy to Arc testnet.
-
-   ```bash
-   npm run deploy:arc
-   ```
-
-7. Copy the deployed address from `deployments/arc-testnet.json`.
-
-8. Open `index.html` and replace `PASTE_YOUR_DEPLOYED_ADDRESS_HERE` with the deployed contract address.
-
-9. Open `index.html` in your browser, connect MetaMask, switch to Arc testnet, and send a test payment.
-
-## Deployed Contract
-
-Contract address:
-
-```text
-PASTE_YOUR_DEPLOYED_ADDRESS_HERE
-```
-
-ArcScan:
-
-```text
-https://testnet.arcscan.app/address/PASTE_YOUR_DEPLOYED_ADDRESS_HERE
-```
-
-## Deployment Commands
-
-Install Node.js dependencies:
-
-```bash
-npm install
-```
-
-Create a `.env` file from the example:
-
-```bash
-cp .env.example .env
-```
-
-Open `.env` and add the private key for the wallet that will deploy the contract. Do not include `0x` unless your wallet export includes it and Hardhat accepts it.
-
-Compile the Solidity contract:
-
-```bash
-npm run compile
-```
-
-Deploy to Arc testnet:
-
-```bash
-npm run deploy:arc
-```
-
-After deployment, open `deployments/arc-testnet.json`, copy the `address`, and paste it into `index.html` as `CONTRACT_ADDRESS`.
-
-## Roadmap
-
-- Payment requests
-- ENS-style usernames
-- Multi-currency support
-- Mobile app
-- DAO fee governance
-
-## Footer
-
-Developed by [Chiagozie50](https://x.com/chiagozie50) | Nata Finance © 2025
+ Nata Finance @2026
