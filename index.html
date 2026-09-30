@@ -910,7 +910,7 @@
         </div>
         <div>
           <h2>Send USDC across borders. Instant. Transparent. On-chain.</h2>
-          <p>Nata Finance is a professional Web3 payment platform for African cross-border settlement. Send native USDC with NGN reference and memo, all on Arc testnet.</p>
+          <p>Nata Finance is a professional Web3 payment platform for African cross-border settlement. Send native USDC with NGN reference and memo, all on Arc.</p>
           <button class="primary launch-button" id="launchApp" type="button">Launch App</button>
         </div>
       </div>
@@ -918,7 +918,7 @@
       <section class="feature-grid">
         <article class="feature-card">
           <h3>Instant USDC transfers</h3>
-          <p>Send native USDC immediately on Arc testnet with an NGN reference for precise local payment context.</p>
+          <p>Send native USDC immediately on Arc with an NGN reference for precise local payment context.</p>
         </article>
         <article class="feature-card">
           <h3>Transparent 0.5% fee</h3>
@@ -934,7 +934,7 @@
         <div class="step-card how-step">
           <span>1</span>
           <h3>Connect your wallet</h3>
-          <p>Link MetaMask and switch to Arc testnet to start sending.</p>
+          <p>Link MetaMask and switch to Arc to start sending.</p>
         </div>
         <div class="step-card how-step">
           <span>2</span>
@@ -949,7 +949,7 @@
         <div class="step-card how-step">
           <span>4</span>
           <h3>Send — done in seconds</h3>
-          <p>Approve the transaction and track history with ArcScan links.</p>
+          <p>Approve the transaction and track history with Arc Explorer links.</p>
         </div>
       </section>
 
@@ -963,7 +963,7 @@
         <div class="faq-grid">
           <article class="faq-card">
             <h3>What is Nata Finance?</h3>
-            <p>Nata Finance is a secure Web3 payment app for Arc testnet that lets users send native USDC with Nigerian payment context.</p>
+            <p>Nata Finance is a secure Web3 payment app for Arc that lets users send native USDC with Nigerian payment context.</p>
           </article>
           <article class="faq-card">
             <h3>How does it work?</h3>
@@ -991,7 +991,7 @@
           <div class="mark" aria-hidden="true">NF</div>
           <div>
             <h1>Nata Finance</h1>
-            <p>Arc testnet USDC payments with NGN reference.</p>
+            <p>Arc USDC payments with NGN reference.</p>
           </div>
         </div>
         <div class="wallet-area">
@@ -1006,7 +1006,7 @@
           </div>
 
           <div id="networkMenu" class="dropdown-menu" hidden>
-            <button class="menu-item" data-chain="5042002" id="net-arc">Arc Testnet <span id="net-arc-check">✓</span></button>
+            <button class="menu-item" data-chain="5042" id="net-arc">Arc Mainnet <span id="net-arc-check">✓</span></button>
           </div>
         </div>
       </header>
@@ -1021,9 +1021,9 @@
 
       <section class="view active" id="sendView">
           <div class="network-box" id="networkWarning">
-            <strong>Please switch to Arc Testnet.</strong>
-            <span>Nata Finance uses native USDC on Chain ID 5042002.</span>
-            <button class="danger" id="switchNetwork">Switch to Arc Testnet</button>
+            <strong>Please switch to Arc Mainnet.</strong>
+            <span>Nata Finance uses native USDC on Chain ID 5042.</span>
+            <button class="danger" id="switchNetwork">Switch to Arc Mainnet</button>
           </div>
 
           <div class="section-head">
@@ -1046,7 +1046,7 @@
               <div class="field" id="ngnField">
                 <label>NGN Equivalent</label>
                 <div id="ngnEquivalent" style="min-height:48px;padding:12px 13px;border-radius:8px;background:#090d13;border:1px solid var(--line);color:var(--panel-text);">₦0</div>
-                <div class="help-row" style="margin-top:8px;color:var(--muted);font-size:0.86rem"><span>Fixed rate: 1 USDC = ₦1,375 (Testnet rate)</span></div>
+                <div class="help-row" style="margin-top:8px;color:var(--muted);font-size:0.86rem"><span>Reference rate: 1 USDC ≈ ₦1,375 (display only; not used for settlement)</span></div>
               </div>
               <div class="field full">
                 <label for="memo">Memo (optional)</label>
@@ -1080,7 +1080,7 @@
           <div class="section-head">
             <div>
               <h2>Payment History</h2>
-              <p>Sent and received payments are read from contract storage and matched with ArcScan transaction links from events.</p>
+              <p>Sent and received payments are read from contract storage and matched with Arc Explorer transaction links from events.</p>
             </div>
             <div class="subtabs" aria-label="History filter">
               <button class="subtab active" data-history="sent">Sent</button>
@@ -1096,7 +1096,7 @@
           <div class="section-head">
             <div>
               <h2>Protocol Stats</h2>
-              <p>Live contract counters from Arc testnet.</p>
+              <p>Live contract counters from Arc.</p>
             </div>
             <button class="secondary" id="refreshStats">Refresh</button>
           </div>
@@ -1141,7 +1141,8 @@
   <div class="toast-region" id="toasts" aria-live="polite" aria-atomic="true"></div>
 
   <script>
-    const CONTRACT_ADDRESS = "0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2";
+    // Set to the deployed Arc Mainnet contract address after running `npm run deploy:mainnet`.
+    const CONTRACT_ADDRESS = "";
     const CONTRACT_ABI = [
       {
         "inputs": [],
@@ -1293,10 +1294,10 @@
       }
     ];
 
-    const ARC_CHAIN_ID_DECIMAL = 5042002n;
-    const ARC_CHAIN_ID_HEX = "0x4cef52";
-    const ARC_RPC_URL = "https://rpc.testnet.arc.network";
-    const ARC_EXPLORER = "https://testnet.arcscan.app";
+    const ARC_CHAIN_ID_DECIMAL = 5042n;
+    const ARC_CHAIN_ID_HEX = "0x13b2";
+    const ARC_RPC_URL = "https://rpc.mainnet.arc.io";
+    const ARC_EXPLORER = "https://explorer.arc.io";
     const MEMO_LIMIT = 120;
     const DEPLOYED = ethers.isAddress(CONTRACT_ADDRESS);
 
@@ -1446,10 +1447,10 @@
 
       networkWarning.classList.toggle("show", !onArc);
       networkStatus.querySelector(".dot").classList.toggle("ok", onArc);
-      networkStatus.querySelector("span:last-child").textContent = onArc ? "Arc Testnet" : "Wrong network";
+      networkStatus.querySelector("span:last-child").textContent = onArc ? "Arc Mainnet" : "Wrong network";
 
       if (!onArc) {
-        toast("error", "Wrong network", "Please switch to Arc Testnet.");
+        toast("error", "Wrong network", "Please switch to Arc Mainnet.");
       }
 
       return onArc;
@@ -1470,7 +1471,7 @@
             method: "wallet_addEthereumChain",
             params: [{
               chainId: ARC_CHAIN_ID_HEX,
-              chainName: "Arc Testnet",
+              chainName: "Arc",
               nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
               rpcUrls: [ARC_RPC_URL],
               blockExplorerUrls: [ARC_EXPLORER]
@@ -1481,7 +1482,7 @@
         signer = await provider.getSigner();
         contract = DEPLOYED ? new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer) : null;
         done.close();
-        toast("success", "Network ready", "Arc Testnet is active.");
+        toast("success", "Network ready", "Arc Mainnet is active.");
         await Promise.all([ensureArcState(), loadBalance(), loadStats(), loadHistory()]);
         updateNetworkMenu();
       } catch (error) {
@@ -1555,7 +1556,7 @@
         
         renderHistory();
       } catch (error) {
-        historyList.innerHTML = '<div class="empty">Could not load history. Make sure you are on Arc Testnet.</div>';
+        historyList.innerHTML = '<div class="empty">Could not load history. Make sure you are on Arc Mainnet.</div>';
         console.error(error);
       }
     }
@@ -1608,7 +1609,7 @@
           minute: "2-digit"
         });
         const txLink = payment.txHash
-          ? `<a href="${ARC_EXPLORER}/tx/${payment.txHash}" target="_blank" rel="noreferrer">ArcScan</a>`
+          ? `<a href="${ARC_EXPLORER}/tx/${payment.txHash}" target="_blank" rel="noreferrer">Arc Explorer</a>`
           : `<span>No tx link</span>`;
 
         return `
@@ -1690,7 +1691,7 @@
     }
 
     async function ensureReadyForTx() {
-      if (!await ensureArcState()) return falseToast("Wrong network", "Please switch to Arc Testnet.");
+      if (!await ensureArcState()) return falseToast("Wrong network", "Please switch to Arc Mainnet.");
       if (!requireContract()) return false;
 
       const value = ethers.parseUnits(amount.value.trim(), 18);
@@ -1853,7 +1854,7 @@
         return "Insufficient USDC balance.";
       }
       if (/network|chain|unsupported/i.test(raw)) {
-        return "Please switch to Arc Testnet.";
+        return "Please switch to Arc Mainnet.";
       }
       const revert = raw.match(/reverted(?: with reason string)? ['"]?([^'"]+)['"]?/i);
       return revert ? revert[1] : raw.replace(/^execution reverted:?\s*/i, "");

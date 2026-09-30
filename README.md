@@ -57,7 +57,7 @@ No hidden charges. No spread. No surprises.
 
 | Layer | Technology |
 |-------|-----------|
-| Blockchain | Arc Testnet (Chain ID: 5042002) |
+| Blockchain | Arc Mainnet (Chain ID: 5042) |
 | Smart Contract | Solidity 0.8.20 |
 | Frontend | HTML, CSS, Ethers.js v6 |
 | Wallet | MetaMask |
@@ -75,10 +75,12 @@ No hidden charges. No spread. No surprises.
 
 ## Smart Contract
 
-| Network | Arc Testnet |
+| Network | Arc Mainnet |
 |---------|------------|
-| Address | `0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2` |
-| Explorer | [View on ArcScan](https://testnet.arcscan.app/address/0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2) |
+| Address | `_set after mainnet deploy_` |
+| Explorer | [View on Arc Explorer](https://explorer.arc.io) |
+
+> Chain ID `5042` · RPC `https://rpc.mainnet.arc.io` · Explorer `https://explorer.arc.io`
 
 ---
 
