@@ -5,13 +5,18 @@ pragma solidity ^0.8.20;
  * NATA FINANCE
  * Cross-border USDC payment infrastructure on Arc.
  *
+ * Arc Mainnet:
+ * - Chain ID: 5042
+ * - RPC: https://rpc.mainnet.arc.io
+ * - Explorer: https://explorer.arc.io
+ *
  * Arc Testnet:
  * - Chain ID: 5042002
- * - RPC: https://rpc.testnet.arc.network
- * - Explorer: https://testnet.arcscan.app
+ * - RPC: https://rpc.testnet.arc.io
+ * - Explorer: https://explorer.testnet.arc.io
  *
  * Arc uses native USDC for gas and value transfers, so payments are sent as
- * msg.value with 18 decimals. No ERC-20 approve() flow is needed.
+ * msg.value using the native 18-decimal view. No ERC-20 approve() flow is needed.
  */
 contract NataFinance {
     event PaymentSent(
@@ -65,15 +70,14 @@ contract NataFinance {
         require(msg.value > 0, "NataFinance: amount must be > 0");
         require(recipient != address(0), "NataFinance: invalid recipient");
         require(recipient != msg.sender, "NataFinance: cannot send to yourself");
-        require(bytes(memo).length > 0, "NataFinance: memo is required");
+        // Memo is optional. Only its length is capped so on-chain storage stays bounded.
         require(bytes(memo).length <= 120, "NataFinance: memo max 120 chars");
 
         uint256 fee = msg.value / FEE_DENOMINATOR;
         uint256 netAmount = msg.value - fee;
 
-        (bool ok, ) = recipient.call{value: netAmount}("");
-        require(ok, "NataFinance: transfer to recipient failed");
-
+        // Effects before interactions: record the payment and update totals first, then
+        // transfer out. A failed transfer reverts the whole call, rolling these back.
         Payment memory p = Payment({
             sender: msg.sender,
             recipient: recipient,
@@ -92,6 +96,9 @@ contract NataFinance {
             totalPayments++;
             totalVolumeWei += msg.value;
         }
+
+        (bool ok, ) = recipient.call{value: netAmount}("");
+        require(ok, "NataFinance: transfer to recipient failed");
 
         emit PaymentSent(
             msg.sender,

@@ -70,11 +70,33 @@ describe("NataFinance", function () {
         .sendPayment(sender.address, 1n, "Memo", { value: ethers.parseEther("1") })
     ).to.be.revertedWith("NataFinance: cannot send to yourself");
 
+    const longMemo = "x".repeat(121);
     await expect(
       nataFinance
         .connect(sender)
-        .sendPayment(recipient.address, 1n, "", { value: ethers.parseEther("1") })
-    ).to.be.revertedWith("NataFinance: memo is required");
+        .sendPayment(recipient.address, 1n, longMemo, { value: ethers.parseEther("1") })
+    ).to.be.revertedWith("NataFinance: memo max 120 chars");
+  });
+
+  it("accepts a payment with an empty memo (memo is optional)", async function () {
+    const { nataFinance, sender, recipient } = await deployFixture();
+    const grossAmount = ethers.parseEther("5");
+    const expectedFee = grossAmount / 200n;
+    const expectedNet = grossAmount - expectedFee;
+
+    const tx = nataFinance
+      .connect(sender)
+      .sendPayment(recipient.address, 6875n, "", { value: grossAmount });
+
+    await expect(tx).to.changeEtherBalances(
+      [sender, recipient, nataFinance],
+      [-grossAmount, expectedNet, expectedFee]
+    );
+
+    const sent = await nataFinance.getSentPayments(sender.address);
+    expect(sent).to.have.lengthOf(1);
+    expect(sent[0].memo).to.equal("");
+    expect(await nataFinance.totalPayments()).to.equal(1n);
   });
 
   it("allows only the owner to withdraw retained fees", async function () {
