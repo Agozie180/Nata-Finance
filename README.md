@@ -77,7 +77,7 @@ No hidden charges. No spread. No surprises.
 
 | Network | Arc Mainnet |
 |---------|------------|
-| Address | `_set after mainnet deploy_` |
+| Address | [`0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2`](https://explorer.arc.io/address/0xEebDda242F73f3ed7c1d002aD2d8d2055eE71dB2) |
 | Explorer | [View on Arc Explorer](https://explorer.arc.io) |
 
 > Chain ID `5042` · RPC `https://rpc.mainnet.arc.io` · Explorer `https://explorer.arc.io`
