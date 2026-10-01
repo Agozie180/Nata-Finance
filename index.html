@@ -1046,7 +1046,7 @@
               <div class="field" id="ngnField">
                 <label>NGN Equivalent</label>
                 <div id="ngnEquivalent" style="min-height:48px;padding:12px 13px;border-radius:8px;background:#090d13;border:1px solid var(--line);color:var(--panel-text);">₦0</div>
-                <div class="help-row" style="margin-top:8px;color:var(--muted);font-size:0.86rem"><span>Reference rate: 1 USDC ≈ ₦1,375 (display only; not used for settlement)</span></div>
+                <div class="help-row" style="margin-top:8px;color:var(--muted);font-size:0.86rem"><span id="rateLabel">Reference rate: fetching live USDC → NGN…</span></div>
               </div>
               <div class="field full">
                 <label for="memo">Memo (optional)</label>
@@ -1309,6 +1309,13 @@
     let sentPayments = [];
     let receivedPayments = [];
 
+    // Live USDC -> NGN reference rate from CoinGecko. The fallback is a
+    // last-resort only, used (and labelled as such) if the feed is unreachable.
+    const NGN_RATE_URL = "https://api.coingecko.com/api/v3/simple/price?ids=usd-coin&vs_currencies=ngn";
+    const NGN_RATE_FALLBACK = 1375;
+    let ngnRate = NGN_RATE_FALLBACK;
+    let ngnRateLive = false;
+
     const el = (id) => document.getElementById(id);
     const connectWallet = el("connectWallet");
     const walletAddress = el("walletAddress");
@@ -1332,6 +1339,7 @@
     const feePreview = el("feePreview");
     const netPreview = el("netPreview");
     const ngnEquivalent = el("ngnEquivalent");
+    const rateLabel = el("rateLabel");
     const sendPayment = el("sendPayment");
     const clearForm = el("clearForm");
     const historyList = el("historyList");
@@ -1401,6 +1409,8 @@
 
     updatePreview();
     updateCounter();
+    fetchNgnRate();
+    setInterval(fetchNgnRate, 60000);
 
     async function connect() {
       const done = toast("pending", "Connecting wallet", "Waiting for MetaMask approval...");
@@ -1649,7 +1659,7 @@
         const pending = toast("pending", "Confirm payment", "Approve the transaction in MetaMask.");
         try {
           const value = ethers.parseUnits(amount.value.trim(), 18);
-          const ngnRefNumeric = Math.round(Number(amount.value.trim()) * 1375);
+          const ngnRefNumeric = Math.round(Number(amount.value.trim()) * ngnRate);
           const ngnRef = BigInt(ngnRefNumeric);
           const memoText = memo.value.trim() || "";
 
@@ -1700,6 +1710,31 @@
       return true;
     }
 
+    function updateRateLabel() {
+      if (!rateLabel) return;
+      const shown = ngnRate.toLocaleString(undefined, { maximumFractionDigits: 2 });
+      rateLabel.textContent = ngnRateLive
+        ? `Live rate: 1 USDC ≈ ₦${shown} (CoinGecko; reference only, not settlement)`
+        : `Reference rate: 1 USDC ≈ ₦${shown} (live rate unavailable — fallback; reference only)`;
+    }
+
+    async function fetchNgnRate() {
+      try {
+        const res = await fetch(NGN_RATE_URL, { cache: "no-store" });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const rate = Number(data && data["usd-coin"] && data["usd-coin"].ngn);
+        if (!Number.isFinite(rate) || rate <= 0) throw new Error("unexpected rate payload");
+        ngnRate = rate;
+        ngnRateLive = true;
+      } catch (err) {
+        if (!ngnRateLive) ngnRate = NGN_RATE_FALLBACK;
+        console.warn("NGN rate fetch failed; using fallback:", err && err.message ? err.message : err);
+      }
+      updateRateLabel();
+      updatePreview();
+    }
+
     function updatePreview() {
       try {
         if (!amount.value.trim() || Number(amount.value) <= 0) {
@@ -1713,9 +1748,9 @@
         const net = value - fee;
         feePreview.textContent = `${formatUsdc(fee, 6)} USDC (0.5%)`;
         netPreview.textContent = `${formatUsdc(net, 6)} USDC`;
-        // NGN equivalent at fixed rate
+        // NGN equivalent at the live USDC -> NGN rate
         const numeric = Number(amount.value.trim()) || 0;
-        const ngn = Math.round(numeric * 1375);
+        const ngn = Math.round(numeric * ngnRate);
         ngnEquivalent.textContent = `₦${ngn.toLocaleString()}`;
       } catch {
         feePreview.textContent = "Invalid amount";

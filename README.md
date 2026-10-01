@@ -84,6 +84,22 @@ No hidden charges. No spread. No surprises.
 
 ---
 
+## Roadmap
+
+Nata Finance will also target **decentralized peer-to-peer (P2P) settlement** — a trustless off-ramp that moves value between USDC and local bank accounts without a centralized intermediary.
+
+**Planned P2P cash-out flow:**
+
+1. **Connect wallet** — connect MetaMask on Arc.
+2. **Enter amount** — choose how much USDC to send.
+3. **Input bank details** — add the recipient's local bank account.
+4. **Confirm transaction** — approve the transfer in your wallet.
+5. **Receive funds** — the recipient's Naira arrives in their bank account in ~30 seconds.
+
+> Status: planned — a direction for the project, not a shipped feature yet. The live app today supports on-chain USDC payments with NGN reference and memo on Arc.
+
+---
+
 
 Developed by Chiagozie50 on X
 
